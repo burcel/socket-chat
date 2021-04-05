@@ -56,7 +56,7 @@ class Client:
         Start conversation
         """
         while True:
-            message = input("{}: ".format(self.username))
+            message = input("")
             self.sock.sendall(message.encode('ascii'))
 
 

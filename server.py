@@ -37,7 +37,7 @@ class Server:
         while True:
             # Accept new connections
             conn, address = sock.accept()
-            print("Established a new connection from: {}".format(conn.getpeername()))
+            print("Incoming connection from: {}".format(conn.getpeername()))
             # Create thread for connection
             server_connection = ServerConnection(self, conn, address)
             server_connection.start()
@@ -67,6 +67,12 @@ class Server:
         Check if username exists in server; return True if it is, False otherwise
         """
         return username in self.username_set
+
+    def add_username(self, username: str) -> None:
+        """
+        Add username to set
+        """
+        self.username_set.add(username)
 
 
 if __name__ == '__main__':

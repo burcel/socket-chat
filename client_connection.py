@@ -14,5 +14,5 @@ class ClientConnection(threading.Thread):
         """
         while True:
             message = self.sock.recv(self.BUFFER_SIZE).decode('ascii')
-            print("{!r}".format(message))
+            print("{}".format(message))
 
