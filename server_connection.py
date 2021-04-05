@@ -1,3 +1,5 @@
+from message import Message
+from typing import TYPE_CHECKING, Any
 import threading
 
 
@@ -14,7 +16,7 @@ class ServerConnection(threading.Thread):
     def run(self) -> None:
         self.username = self.get_username()
         self.server.add_client(self)
-        # TODO: greeting message
+
         # Start listening to messages
         while True:
             message = self.conn.recv(self.BUFFER_SIZE).decode('ascii')
@@ -32,17 +34,18 @@ class ServerConnection(threading.Thread):
         """
         Get username from client and return it
         """
-        sent_message = "Please enter a username."
+        message = "Please enter a username."
         while True:
-            self.send(sent_message)
+            self.send(message)
             received_message = self.conn.recv(self.BUFFER_SIZE).decode('ascii')
             if received_message is not None and len(received_message) > 0:
                 if self.server.check_username(received_message) is True:
-                    sent_message = "That username is taken. Please enter another username."
+                    message = "That username is taken. Please enter another username."
                 else:
+                    self.send(Message.OK)
                     return received_message
             else:
-                sent_message = "Please enter a valid username."
+                message = "Please enter a valid username."
 
     def send(self, message: str) -> None:
         """
