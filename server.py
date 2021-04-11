@@ -48,7 +48,7 @@ class Server:
         """
         for server_connection in self.client_list:
             if server_connection.username != username:
-                server_connection.send("{}: {}".format(username, message))
+                server_connection.send("{}: {}".format(username, message).encode("UTF-8"))
 
     def add_client(self, server_connection: ServerConnection) -> None:
         """

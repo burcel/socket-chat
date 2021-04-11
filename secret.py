@@ -1,15 +1,16 @@
 from Cryptodome.Cipher import AES, PKCS1_OAEP
 from Cryptodome.PublicKey import RSA
 from Cryptodome.Random import get_random_bytes
-from typing import Tuple
 
 
 class Secret:
     RSA_BIT_SIZE = 2048
     AES_BYTE_SIZE = 16
+    AES_MAC_BYTE_SIZE = 16
     AES_NONCE_SIZE = 8
 
     def __init__(self):
+        self.ready = False
         self.rsa_key_pair = None
         self.rsa_cipher = None
         self.aes_key = None
@@ -32,7 +33,7 @@ class Secret:
         """
         return self.rsa_key_pair.public_key().export_key()
 
-    def encrypt_rsa(self, plaintext: str) -> bytes:
+    def encrypt_rsa(self, plaintext: bytes) -> bytes:
         """
         Encrypt given plaintext and return ciphertext using RSA
         """
@@ -44,7 +45,7 @@ class Secret:
         """
         return self.rsa_cipher.decrypt(ciphertext)
 
-    def init_aes(self, aes_key: bytes = None, aes_nonce: bytes = None):
+    def init_aes(self, aes_key: bytes = None, aes_nonce: bytes = None) -> None:
         """
         Initialize AES key, nonce & cipher
         """
@@ -56,24 +57,33 @@ class Secret:
             self.aes_nonce = get_random_bytes(self.AES_NONCE_SIZE)
         else:
             self.aes_nonce = aes_nonce
+
+    def encrypt_aes(self, plaintext: bytes) -> bytes:
+        """
+        Encrypt given plaintext using AES and return ciphertext and mac tag
+        """
         self.aes_cipher = AES.new(self.aes_key, AES.MODE_GCM, nonce=self.aes_nonce)
+        ciphertext, mac_tag = self.aes_cipher.encrypt_and_digest(plaintext)
+        return mac_tag + ciphertext
 
-    def export_nonce(self) -> bytes:
+    def decrypt_aes(self, payload: bytes) -> bytes:
         """
-        Return nonce value for AES
-        """
-        return self.aes_cipher.nonce
-
-    def encrypt_aes(self, plaintext: str) -> Tuple[bytes, bytes]:
-        """
-        Encrypt given plaintext and return ciphertext and mac tag using AES
-        """
-        return self.aes_cipher.encrypt_and_digest(plaintext.encode("UTF-8"))
-
-    def decrypt_aes(self, ciphertext: bytes, mac_tag: bytes) -> str:
-        """
-        Decrypt given ciphertext, validate mac and return plaintext using AES
+        Parse payload, decrypt given ciphertext using AES, validate mac and return plaintext
         :return:
         """
-        return self.aes_cipher.decrypt_and_verify(ciphertext, mac_tag).decode("UTF-8")
+        mac_tag = payload[:self.AES_MAC_BYTE_SIZE]
+        ciphertext = payload[self.AES_MAC_BYTE_SIZE:]
+        self.aes_cipher = AES.new(self.aes_key, AES.MODE_GCM, nonce=self.aes_nonce)
+        return self.aes_cipher.decrypt_and_verify(ciphertext, mac_tag)
 
+    def export_aes_key(self) -> bytes:
+        """
+        Return AES data as bytes
+        """
+        return self.aes_key + self.aes_nonce
+
+    def parse_aes_key(self, payload: bytes) -> None:
+        """
+        Parse AES data from payload and populate AES key & nonce
+        """
+        self.init_aes(aes_key=payload[:self.AES_BYTE_SIZE], aes_nonce=payload[-self.AES_NONCE_SIZE:])

@@ -13,6 +13,7 @@ class ClientConnection(threading.Thread):
         Start listening thread
         """
         while True:
-            message = self.sock.recv(self.BUFFER_SIZE).decode('ascii')
+            # TODO: encryption
+            message = self.sock.recv(self.BUFFER_SIZE).decode("UTF-8")
             print("{}".format(message))
 
