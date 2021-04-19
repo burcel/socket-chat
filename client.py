@@ -33,7 +33,7 @@ class Client:
         Send message through socket
         """
         if self.secret.ready is True:
-            self.secret.encrypt_aes(message)
+            message = self.secret.encrypt_aes(message)
         self.sock.sendall(message)
 
     def receive(self) -> bytes:
@@ -62,7 +62,7 @@ class Client:
 
         self.register_username()
         # Create thread for connection
-        server_connection = ClientConnection(self.sock)
+        server_connection = ClientConnection(self)
         server_connection.start()
         # Start conversation
         self.converse()
@@ -72,10 +72,10 @@ class Client:
         Register username to server
         """
         while True:
-            message = self.receive().decode("UTF-8")
-            print(message)
+            message = self.receive()
             if message == Message.OK:
                 break
+            print(message.decode("UTF-8"))
             while True:
                 self.username = input("Username: ")
                 if len(self.username) > 0:
@@ -90,7 +90,8 @@ class Client:
         """
         while True:
             message = input("")
-            self.send(message.encode("UTF-8"))
+            if len(message) > 0:
+                self.send(message.encode("UTF-8"))
 
     def authenticate(self):
         """

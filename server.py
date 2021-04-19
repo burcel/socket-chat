@@ -61,6 +61,7 @@ class Server:
         Remove connected client from list
         """
         self.client_list.remove(server_connection)
+        self.username_set.remove(server_connection.username)
 
     def check_username(self, username: str) -> bool:
         """

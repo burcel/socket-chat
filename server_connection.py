@@ -28,11 +28,12 @@ class ServerConnection(threading.Thread):
             return None
 
         self.get_username()
-        self.server.add_client(self)
         try:
             self.listen()
         except Exception:
             print(traceback.format_exc())
+        finally:
+            pass
 
     def listen(self) -> None:
         """
@@ -62,9 +63,11 @@ class ServerConnection(threading.Thread):
                 if self.server.check_username(received_message) is True:
                     message = Message.TAKEN_USERNAME
                 else:
-                    self.server.add_username(received_message)
                     self.username = received_message
+                    self.server.add_username(received_message)
+                    self.server.add_client(self)
                     self.send(Message.OK)
+                    break
             else:
                 message = Message.ENTER_VALID_USERNAME
 
@@ -89,7 +92,9 @@ class ServerConnection(threading.Thread):
         """
         Start crypto process -> Send public key and receive AES key for encryption
         """
+        # Initialize RSA public & private keys
         self.secret.init_rsa()
+        # Send RSA public key to client
         self.send(self.secret.export_public_key())
         # Wait for encrypted AES key & nonce
         message = self.receive()
